@@ -29,17 +29,17 @@ class USBAllocator:
         self._next_interface = 0
         self._next_in_ep     = 1
         self._next_out_ep    = 1
-    
+
     def interface(self):
         n = self._next_interface
         self._next_interface += 1
         return n
-    
+
     def in_ep(self):
         n = self._next_in_ep
         self._next_in_ep += 1
         return n
-    
+
     def out_ep(self):
         n = self._next_out_ep
         self._next_out_ep += 1
@@ -66,7 +66,7 @@ class OrbSoC(SoCCore):
         # LEDs
         if hasattr(platform, 'add_leds'):
             platform.add_leds(self)
-        
+
         if hasattr(self, 'led_status'):
             self.comb += self.led_status.g.eq(1)
 
@@ -84,7 +84,7 @@ class OrbSoC(SoCCore):
         self.add_trace()
 
         # Debug
-        self.add_debug()
+        self.add_debug(with_v2 = False)
 
         # Target power
         #self.add_target_power()
@@ -450,11 +450,11 @@ class OrbSoC(SoCCore):
     def add_usb_control_handler(self, handler):
         if hasattr(self, 'usb_control_ep'):
             self.usb_control_ep.add_request_handler(handler)
-        
+
         else:
             self.usb_control_handlers.append(handler)
 
-    def add_usb(self):            
+    def add_usb(self):
         self.usb_alloc = USBAllocator()
 
         self.wrapper.connect_domain('usb')
@@ -468,11 +468,11 @@ class OrbSoC(SoCCore):
             d.idProduct          = 0x3443  # Allocated from pid.codes
 
             d.iManufacturer      = "Orbcode"
-            d.iProduct           = "Orbtrace"
+            d.iProduct           = "Orbtrace with CMSIS-DAP"
             d.iSerialNumber      = "N/A"
 
             d.bNumConfigurations = 1
-        
+
         self.usb_conf_emitter = self.usb_descriptors.ConfigurationDescriptor()
 
         # Enter ConfigurationDescriptor context manager to avoid having to wrap everything in a with-statement.
@@ -491,11 +491,11 @@ class OrbSoC(SoCCore):
 
         # Add control endpoint handler.
         self.usb_control_ep = self.usb.usb.add_standard_control_endpoint(self.usb_descriptors, blacklist = blacklist) # FIXME: wrap
-        
+
         # Add additional request handlers.
         for handler in self.usb_control_handlers:
             self.usb_control_ep.add_request_handler(handler)
-        
+
     def add_wrapper(self):
         self.submodules.wrapper = Wrapper(self.platform)
 

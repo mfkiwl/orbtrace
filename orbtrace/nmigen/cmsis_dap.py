@@ -17,7 +17,10 @@ from .dbgIF                  import DBGIF
 # =================================
 
 DAP_CONNECT_DEFAULT      = 1                # Default connect is SWD
-DAP_VERSION_STRING       = Cat(C(0x31,8),C(0x2e,8),C(0x30,8),C(0x30,8),C(0,8))
+DAP_PROTOCOL_STRING_LEN  = 5
+DAP_PROTOCOL_STRING      = Cat(C(DAP_PROTOCOL_STRING_LEN+1,8),C(ord('2'),8),C(ord('.'),8),C(ord('1'),8),C(ord('.'),8),C(ord('0'),8),C(0,8)) # Protocol version V2.1.0
+DAP_VERSION_STRING_LEN   = 4
+DAP_VERSION_STRING       = Cat(C(DAP_VERSION_STRING_LEN+1,8),C(0x31,8),C(0x2e,8),C(0x30,8),C(0x30,8),C(0,8))
 DAP_CAPABILITIES         = 0x03             # JTAG and SWD Debug
 DAP_TD_TIMER_FREQ        = 0x3B9ACA00       # 1uS resolution timer
 DAP_MAX_PACKET_COUNT     = 1                # 1 max packet count
@@ -209,11 +212,16 @@ class CMSIS_DAP(Elaboratable):
 
         with m.Switch(self.rxBlock.word_select(1,8)):
             # These cases are not implemented in this firmware
-            # Get the Vendor ID, Product ID, Serial Number, Target Device Vendor, Target Device Name
-            with m.Case(0x01, 0x02, 0x03, 0x05, 0x06):
+            # Get the Vendor ID, Product ID, Serial Number, Target Device Vendor, Target Device Name,
+            # Target Board Vendor, Target Board Name
+            with m.Case(0x01, 0x02, 0x03, 0x05, 0x06, 0x07, 0x08):
                 m.d.sync += [ self.txLen.eq(2), self.txBlock[8:16].eq(Cat(C(0,8))) ]
             with m.Case(0x04): # Get the CMSIS-DAP Firmware Version (string)
-                m.d.sync += [ self.txLen.eq(7), self.txBlock[8:56].eq(Cat(C(5,8),DAP_VERSION_STRING))]
+                m.d.sync += [ self.txLen.eq(3+DAP_PROTOCOL_STRING_LEN),
+                              self.txBlock.bit_select(8,8+(2+DAP_PROTOCOL_STRING_LEN)*8).eq(DAP_PROTOCOL_STRING) ]
+            with m.Case(0x09): # Get the Product Firmware version (string)
+                m.d.sync += [ self.txLen.eq(3+DAP_VERSION_STRING_LEN),
+                              self.txBlock.bit_select(8,8+(2+DAP_VERSION_STRING_LEN)*8).eq(DAP_VERSION_STRING)  ]
             with m.Case(0xF0): # Get information about the Capabilities (BYTE) of the Debug Unit
                 m.d.sync+=[self.txLen.eq(3), self.txBlock[8:24].eq(Cat(C(1,8),C(DAP_CAPABILITIES,8)))]
             with m.Case(0xF1): # Get the Test Domain Timer parameter information
