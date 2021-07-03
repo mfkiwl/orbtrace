@@ -43,7 +43,7 @@ def write_to_hid(dev, msg_str):
     for p in msg_str:
         print(f' 0x{p:02x}', end="")
 
-    byte_str = bytes(msg_str) + b'\0' * max(64 - len(msg_str), 0)
+    byte_str = b'\0' + bytes(msg_str) + b'\0' * max(64 - len(msg_str), 0)
 
     device.write(byte_str)
     print()
@@ -127,10 +127,10 @@ tests2 = (
 )
 
 tests = (
-    ( "FW version",                 b"\x00\x04",                    b"\x00\x05\x31\x2e\x30\x30\x00" ),
-#    ( "DAP_SWJ_Clock",              b"\x11\x0f\x42\x40\x00",        b"\x11\x00"                 ),
-#    ( "DAP_JTAG_Sequence",          b"\x14\x07\x48\x00\x01\x00\x41\x00\x02\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x42\x00\x01\x00",
-#                                    b"\x14\x00\x77\x04\xa0\x4b\x41\x90\x41\x06\x00\x00\x00\x00\x00\x00\x00" )
+    ( "FW version",                 b"\x00\x04",                    b"\x00\x06\x32\x2e\x31\x2e\x30\x00" ),
+    ( "DAP_SWJ_Clock",              b"\x11\x0f\x42\x40\x00",        b"\x11\x00"                 ),
+    ( "DAP_JTAG_Sequence",          b"\x14\x07\x48\x00\x01\x00\x41\x00\x02\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x42\x00\x01\x00",
+                                    b"\x14\x00\x77\x04\xa0\x4b\x41\x90\x41\x06\x00\x00\x00\x00\x00\x00\x00" )
     )
 
 
@@ -153,7 +153,6 @@ for desc,inseq,outsq in tests:
     if (IS_V1):
         write_to_hid(device, inseq)
         r=device.read(127)
-        print(len(r),r)
     else:
         write_to_usb(device,bytes(inseq))
         r=read_from_usb(device,len(outsq),1000)

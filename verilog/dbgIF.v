@@ -380,7 +380,7 @@ module dbgIF #(parameter CLK_FREQ=150000000, parameter DEFAULT_SWCLK=1000000, pa
                              else
                                begin
                                   // One extra tick to allow the clock edge to propagate
-                                  cdivcount  <= clkDiv+1;
+                                  cdivcount  <= clkDiv?clkDiv:1;
                                   dbg_state  <= ST_DBG_WAIT_CLKCHANGE;
                                end
                           end // case: CMD_PINS_WRITE

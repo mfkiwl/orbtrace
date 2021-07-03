@@ -86,7 +86,7 @@ CMD_JTAG_RESET           = 14
 
 # DAP_Info               : Done
 # DAP_Hoststatus         : Done (But not tied to h/w)
-# DAP_Connect            : Done + Tested for SWD, Not for JTAG
+# DAP_Connect            : Done
 # DAP_Disconnect         : Done
 # DAP_WriteABORT         : Done
 # DAP_Delay              : Done
@@ -872,6 +872,9 @@ class CMSIS_DAP(Elaboratable):
             # Setup to have control over tms, tdi and swwr (set for output), with clocks of 1 clock cycle
             self.dbgif.dwrite.eq(0),
 
+            # In case this is CMSIS-DAP v1, keep a tally of whats been sent so we can pad the packet
+            self.txedLen.eq(2),
+
             # Just for now take over reset as well
             self.dbgif.pinsin.eq(0b0001_0111_0001_0000),
             self.dbgif.command.eq(CMD_PINS_WRITE),
@@ -993,7 +996,8 @@ class CMSIS_DAP(Elaboratable):
                             self.streamIn.valid.eq(1),
                             self.pendingTx.eq(self.tdoBuild),
                             self.tdoCount.eq(0),
-                            self.tdoBuild.eq(0)
+                            self.tdoBuild.eq(0),
+                            self.txedLen.eq(self.txedLen+1)
                         ]
                 with m.Else():
                     with m.If(self.tckCycles==0):
@@ -1008,11 +1012,17 @@ class CMSIS_DAP(Elaboratable):
                 with m.If(self.streamIn.ready):
                     m.d.sync += [
                         self.streamIn.payload.eq(self.pendingTx),
-                        self.streamIn.last.eq(1),
-                        self.streamIn.valid.eq(1)
+                        self.streamIn.last.eq(self.isV2 | (self.txedLen==64)),
+                        self.streamIn.valid.eq(1),
+                        self.txb.eq(8)
                     ]
-                    m.next = 'IDLE'
 
+            # -------------
+            with m.Case(8): # Now decide how to terminate
+                    with m.If(self.isV2 | (self.txedLen==64)):
+                        m.next = 'IDLE'
+                    with m.Else():
+                        m.next = 'V1PACKETFILL'
 
     # -------------------------------------------------------------------------------------
 

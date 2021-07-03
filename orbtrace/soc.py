@@ -84,7 +84,7 @@ class OrbSoC(SoCCore):
         self.add_trace()
 
         # Debug
-        self.add_debug(with_v2 = False)
+        self.add_debug()
 
         # Target power
         #self.add_target_power()
