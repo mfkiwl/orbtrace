@@ -185,7 +185,7 @@ void genericsSetReportLevel( enum verbLevel lset )
 enum verbLevel genericsGetReportLevel( void )
 
 {
-  return lstore;
+    return lstore;
 }
 // ====================================================================================================
 uint64_t genericsTimestampuS( void )
@@ -247,7 +247,7 @@ void genericsExit( int status, const char *fmt, ... )
     va_start( va, fmt );
     vsnprintf( op, MAX_STRLEN, fmt, va );
     va_end( va );
-    fputs( C_VERB_ERROR,stderr );
+    fputs( C_VERB_ERROR, stderr );
     fputs( op, stderr );
     fputs( C_RESET, stderr );
 
