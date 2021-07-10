@@ -2,9 +2,9 @@ import usb.backend.libusb1
 
 VENDOR_ID = 0x1209
 PRODUCT_ID = 0x3443
-INTERFACE = 1
-IN_EP = (2|0x80)
-OUT_EP = 2
+INTERFACE = 0
+IN_EP = (1|0x80)
+OUT_EP = 1
 
 def write_to_usb(dev, msg_str):
 
@@ -24,7 +24,7 @@ def write_to_usb(dev, msg_str):
 def read_from_usb(dev, rxlen, timeout):
     try:
 	# try to read a maximum of 2^16-1 bytes from 0x81 (IN endpoint)
-        data = dev.read(IN_EP, 6000, timeout)
+        data = dev.read(IN_EP, 60000, timeout)
     except usb.core.USBError as e:
         print ("Error reading response: {}".format(e.args))
         exit(-1)
@@ -114,6 +114,7 @@ tests2 = (
 )
 
 tests = (
+    ( "FW version",                 b"\x00\x04",                    b"\x00\x05\x31\x2e\x30\x30\x00" ),
     ( "DAP_SWJ_Clock",              b"\x11\x0f\x42\x40\x00",        b"\x11\x00"                 ),
     ( "DAP_JTAG_Sequence",          b"\x14\x07\x48\x00\x01\x00\x41\x00\x02\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x42\x00\x01\x00",
                                     b"\x14\x00\x77\x04\xa0\x4b\x41\x90\x41\x06\x00\x00\x00\x00\x00\x00\x00" )
